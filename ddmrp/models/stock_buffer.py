@@ -1451,9 +1451,9 @@ class StockBuffer(models.Model):
         elif self.adu_calculation_method.source_past == "actual":
             domain = self._past_moves_domain(date_from, date_to, locations)
             for group in self.env["stock.move"].read_group(
-                domain, ["product_id", "product_qty"], ["product_id"]
+                domain, ["product_id", "quantity_product_uom"], ["product_id"]
             ):
-                qty += group["product_qty"]
+                qty += group["quantity_product_uom"]
         return qty / horizon
 
     def _get_horizon_adu_future_demand(self):
@@ -1845,6 +1845,7 @@ class StockBuffer(models.Model):
             outside_dlt=True
         )
         result["domain"] = [("id", "in", moves.ids)]
+        result["views"] = sorted(result["views"], key=lambda view: view[1] != "tree")
         return result
 
     def _get_rfq_dlt(self, dlt_interval=None):
@@ -1871,6 +1872,7 @@ class StockBuffer(models.Model):
         moves = self._search_stock_moves_incoming()
         result["context"] = {}
         result["domain"] = [("id", "in", moves.ids)]
+        result["views"] = sorted(result["views"], key=lambda view: view[1] != "tree")
         return result
 
     def action_view_supply_moves_outside_dlt_window(self):
@@ -1878,6 +1880,7 @@ class StockBuffer(models.Model):
         moves = self._search_stock_moves_incoming(outside_dlt=True)
         result["context"] = {}
         result["domain"] = [("id", "in", moves.ids)]
+        result["views"] = sorted(result["views"], key=lambda view: view[1] != "tree")
         return result
 
     def action_view_supply_rfq_inside_dlt_window(self):
@@ -1900,6 +1903,7 @@ class StockBuffer(models.Model):
         result = self.env["ir.actions.actions"]._for_xml_id("stock.stock_move_action")
         result["context"] = {}
         result["domain"] = [("id", "in", self.qualified_demand_stock_move_ids.ids)]
+        result["views"] = sorted(result["views"], key=lambda view: view[1] != "tree")
         return result
 
     def action_view_qualified_demand_mrp(self):
@@ -1924,6 +1928,9 @@ class StockBuffer(models.Model):
             )
             result["context"] = {}
             result["domain"] = [("id", "in", moves.ids)]
+            result["views"] = sorted(
+                result["views"], key=lambda view: view[1] != "tree"
+            )
         else:
             domain = self._demand_estimate_domain(locations, date_from, date_to)
             estimates = self.env["stock.demand.estimate"].search(domain)
@@ -1963,6 +1970,9 @@ class StockBuffer(models.Model):
             )
             result["context"] = {}
             result["domain"] = [("id", "in", moves.ids)]
+            result["views"] = sorted(
+                result["views"], key=lambda view: view[1] != "tree"
+            )
         else:
             domain = self._demand_estimate_domain(locations, date_from, date_to)
             estimates = self.env["stock.demand.estimate"].search(domain)
